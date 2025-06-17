@@ -1,0 +1,140 @@
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 224 71% 4%; /* Darker blue-gray */
+    --foreground: 210 40% 98%; /* Light gray, almost white */
+
+    --card: 222.2 47.4% 11.2%; /* Default card, slightly lighter than bg */
+    --card-foreground: 210 40% 98%;
+
+    --popover: 220 50% 8%; /* Darker popover */
+    --popover-foreground: 210 40% 98%;
+
+    --primary: 205 90% 50%; /* Vibrant Sky Blue */
+    --primary-foreground: 210 40% 98%; /* White text on primary */
+
+    --secondary: 217.2 32.6% 17.5%; /* Muted blue-gray */
+    --secondary-foreground: 210 40% 98%;
+
+    --muted: 220 20% 25%; /* Darker muted */
+    --muted-foreground: 215 20.2% 65.1%; /* Lighter muted text */
+
+    --accent: 200 80% 55%; /* Slightly lighter sky blue for accents */
+    --accent-foreground: 210 40% 98%;
+
+    --destructive: 0 70% 50%; /* Vibrant Red */
+    --destructive-foreground: 210 40% 98%;
+
+    --border: 217.2 32.6% 25.5%; /* Slightly lighter border */
+    --input: 217.2 32.6% 22.5%; /* Darker input fields */
+    --ring: 205 80% 60%; /* Sky blue for focus rings */
+
+    --radius: 0.75rem; /* Slightly larger radius for modern feel */
+  }
+
+  .dark {
+    --background: 224 71% 4%;
+    --foreground: 210 40% 98%;
+    --card: 222.2 47.4% 11.2%;
+    --card-foreground: 210 40% 98%;
+    --popover: 220 50% 8%;
+    --popover-foreground: 210 40% 98%;
+    --primary: 205 90% 50%;
+    --primary-foreground: 210 40% 98%;
+    --secondary: 217.2 32.6% 17.5%;
+    --secondary-foreground: 210 40% 98%;
+    --muted: 220 20% 25%;
+    --muted-foreground: 215 20.2% 65.1%;
+    --accent: 200 80% 55%;
+    --accent-foreground: 210 40% 98%;
+    --destructive: 0 70% 50%;
+    --destructive-foreground: 210 40% 98%;
+    --border: 217.2 32.6% 25.5%;
+    --input: 217.2 32.6% 22.5%;
+    --ring: 205 80% 60%;
+  }
+}
+
+@layer base {
+  .light {
+    --background: 0 0% 100%; /* White background */
+    --foreground: 0 0% 0%; /* Black text */
+    --card: 0 0% 98%; /* Light card background */
+    --card-foreground: 0 0% 0%;
+    --popover: 0 0% 95%;
+    --popover-foreground: 0 0% 0%;
+    --primary: 205 90% 50%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 217.2 32.6% 90%;
+    --secondary-foreground: 0 0% 0%;
+    --muted: 0 0% 90%;
+    --muted-foreground: 0 0% 30%;
+    --accent: 200 80% 55%;
+    --accent-foreground: 0 0% 100%;
+    --destructive: 0 70% 50%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 0 0% 80%;
+    --input: 0 0% 90%;
+    --ring: 205 80% 60%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground;
+    font-feature-settings: "rlig" 1, "calt" 1, "ss01" 1; /* Added stylistic set for fonts */
+    font-family: 'Poppins', sans-serif; /* Using Inter as a modern sans-serif font */
+  }
+
+  /* Custom scrollbar styles */
+  .scrollbar-thin {
+    scrollbar-width: thin;
+    scrollbar-color: hsl(var(--muted)) hsl(var(--background));
+  }
+  .scrollbar-thin::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+  .scrollbar-thin::-webkit-scrollbar-track {
+    background: hsl(var(--background));
+    border-radius: 10px;
+  }
+  .scrollbar-thin::-webkit-scrollbar-thumb {
+    background-color: hsl(var(--muted));
+    border-radius: 10px;
+    border: 2px solid hsl(var(--background));
+  }
+  .scrollbar-thin::-webkit-scrollbar-thumb:hover {
+    background-color: hsl(var(--secondary));
+  }
+
+  /* Prose styles for email body rendering */
+  .prose {
+    h1,h2,h3,h4,h5,h6 { @apply font-semibold; }
+    a { @apply text-primary hover:text-primary/80 transition-colors; }
+    ul { @apply list-disc pl-5; }
+    ol { @apply list-decimal pl-5; }
+    strong { @apply font-semibold; }
+    code { @apply bg-slate-700/50 text-sm rounded px-1 py-0.5 font-mono; }
+    pre { @apply bg-slate-700/50 p-4 rounded-md overflow-x-auto; }
+    blockquote { @apply border-l-4 border-primary pl-4 italic text-slate-400; }
+  }
+  .prose-invert {
+    h1,h2,h3,h4,h5,h6 { @apply text-slate-100; }
+    a { @apply text-sky-400 hover:text-sky-300; }
+    strong { @apply text-slate-100; }
+    code { @apply bg-slate-600/70 text-slate-200; }
+    pre code { @apply bg-transparent p-0; }
+    blockquote { @apply border-sky-500 text-slate-300; }
+  }
+}
+
+/* Add Inter font from Google Fonts */
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
