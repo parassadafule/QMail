@@ -4,18 +4,22 @@ import { motion } from 'framer-motion';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { ArrowLeft, Star, Trash2, Reply, ReplyAll, Forward, Printer, MoreVertical } from 'lucide-react';
+import { ArrowLeft, Star, Trash2, Reply, ReplyAll, Forward, Printer, MoreVertical, Lock } from 'lucide-react';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { useToast } from '@/components/ui/use-toast';
+import axios from 'axios';
 
 const EmailDetailPage = ({ onEmailAction }) => {
   const { id } = useParams();
   const navigate = useNavigate();
   const { toast } = useToast();
 
-  const [email, setEmail] = React.useState(null);
-  const [loading, setLoading] = React.useState(true);
-  const [error, setError] = React.useState('');
+  const [email, setEmail] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+  const [isDecrypted, setIsDecrypted] = useState(false);
+  const [decryptedContent, setDecryptedContent] = useState(null);
+  const [isDecrypting, setIsDecrypting] = useState(false);
 
   useEffect(() => {
     const fetchEmail = async () => {
@@ -34,7 +38,7 @@ const EmailDetailPage = ({ onEmailAction }) => {
 
         const data = await res.json();
         console.log('Fetched email:', data);
-        setEmail(data.email); // assuming backend returns { email: {...} }
+        setEmail(data.email);
       } catch (err) {
         console.error('Error fetching email:', err);
         setError('Email could not be loaded.');
@@ -45,6 +49,50 @@ const EmailDetailPage = ({ onEmailAction }) => {
 
     fetchEmail();
   }, [id]);
+
+  const handleDecrypt = async () => {
+    if (isDecrypting) return; // Prevent multiple clicks
+
+    try {
+      setIsDecrypting(true);
+      const token = localStorage.getItem('token');
+      if (!token) {
+        console.error("No authentication token found");
+        navigate("/");
+        return;
+      }
+
+      const config = {
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        }
+      };
+
+      const response = await axios.post('http://localhost:5000/decrypt', { emailId: id }, config);
+      console.log('Decryption response:', response.data);
+
+      if (response.data.decryptedContent) {
+        setDecryptedContent(response.data.decryptedContent);
+        setIsDecrypted(true);
+        toast({
+          title: "Success",
+          description: "Email decrypted successfully"
+        });
+      } else {
+        throw new Error('Decryption failed or incomplete data returned');
+      }
+    } catch (error) {
+      console.error('Error decrypting email:', error);
+      toast({
+        title: "Error",
+        description: error.response?.data?.message || "Failed to decrypt email",
+        variant: "destructive"
+      });
+    } finally {
+      setIsDecrypting(false);
+    }
+  };
 
   if (loading) {
     return <div className="p-6 text-slate-400">Loading email...</div>;
@@ -132,7 +180,7 @@ const EmailDetailPage = ({ onEmailAction }) => {
 
       <div className="p-4 md:p-8 flex-1 overflow-y-auto scrollbar-thin scrollbar-thumb-slate-700 scrollbar-track-slate-800/50">
         <h1 className="text-2xl md:text-3xl font-bold text-slate-100 mb-3 break-words">
-          {email.encrypted_subject}
+          {isDecrypted ? decryptedContent?.subject : email.encrypted_subject}
         </h1>
         {email.tags && email.tags.length > 0 && (
           <div className="mb-4 flex flex-wrap gap-2">
@@ -160,11 +208,36 @@ const EmailDetailPage = ({ onEmailAction }) => {
 
         <article
           className="prose prose-sm md:prose-base prose-invert max-w-none text-slate-300 leading-relaxed break-words"
-          dangerouslySetInnerHTML={{ __html: email.encrypted_body }}
+          dangerouslySetInnerHTML={{ __html: isDecrypted ? decryptedContent?.body : email.encrypted_body }}
         />
+
+        {isDecrypted && decryptedContent?.file && (
+          <div className="mt-6 p-4 border border-slate-700 rounded-lg">
+            <h3 className="text-lg font-semibold text-slate-200 mb-2">Attached File</h3>
+            <a 
+              href={decryptedContent.file.url} 
+              download={decryptedContent.file.name}
+              className="inline-flex items-center text-sky-400 hover:text-sky-300"
+            >
+              <span className="mr-2">📎</span>
+              {decryptedContent.file.name}
+            </a>
+          </div>
+        )}
       </div>
 
       <footer className="p-4 md:p-6 border-t border-slate-700 flex flex-col sm:flex-row items-center justify-end space-y-3 sm:space-y-0 sm:space-x-3">
+        {!isDecrypted && (
+          <Button 
+            variant="outline" 
+            onClick={handleDecrypt}
+            disabled={isDecrypting}
+            className="w-full sm:w-auto border-slate-600 text-slate-300 hover:bg-slate-700 hover:text-sky-400"
+          >
+            <Lock size={18} className="mr-2" /> 
+            {isDecrypting ? 'Decrypting...' : 'Decrypt'}
+          </Button>
+        )}
         <Button variant="outline" onClick={() => toast({ title: "Feature not implemented", description: "Reply functionality coming soon!" })} className="w-full sm:w-auto border-slate-600 text-slate-300 hover:bg-slate-700 hover:text-sky-400">
           <Reply size={18} className="mr-2" /> Reply
         </Button>
