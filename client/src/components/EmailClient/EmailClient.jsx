@@ -94,7 +94,6 @@ export default function EmailClient() {
     } catch (err) {
       console.error("Failed to fetch emails:", err);
       if (err.response?.status === 401) {
-        // Token is invalid or expired
         localStorage.removeItem("token");
         localStorage.removeItem("userEmail");
         navigate("/");
@@ -200,7 +199,7 @@ export default function EmailClient() {
     const updatedEmails = {
       ...emails,
       inbox: emails.inbox.map(email => 
-        email.id === emailId ? { ...email, read: true } : email
+        email.id === emailId ? { ...email, is_read: true } : email
       )
     };
     // In a real app, you would update the state here
@@ -215,7 +214,7 @@ export default function EmailClient() {
             primary={email.from}
             secondary={email.subject}
             time={new Date(email.createdAt).toLocaleString()}
-            read={email.isRead}
+            read={email.is_read}
             onClick={() => handleEmailClick(email)}
           />
         ))}
@@ -280,7 +279,7 @@ export default function EmailClient() {
     }
   };
 
-  const handleEmailClick = async (email) => {
+  const handleEmailClick = async (qmail) => {
     try {
       const token = localStorage.getItem("token");
       if (!token) {
@@ -290,7 +289,7 @@ export default function EmailClient() {
       }
 
       const response = await axios.get(
-        `http://localhost:5000/email/${email._id}`,
+        `http://localhost:5000/qmail/${qmail._id}`,
         {
           headers: {
             Authorization: `Bearer ${token}`
@@ -309,40 +308,36 @@ export default function EmailClient() {
   // Show login page if logged out
   if (!isLoggedIn) {
     return (
-      <div className="min-h-screen bg-black flex items-center justify-center p-4">
-        <div className="bg-gray-900 rounded-lg shadow-2xl w-full max-w-md p-8 border border-gray-800">
+      <div className="min-h-screen bg-background flex items-center justify-center p-4">
+        <div className="bg-card rounded-lg shadow-2xl w-full max-w-md p-8 border border-border">
           <div className="text-center mb-8">
-            <h1 className="text-3xl font-bold text-blue-400 tracking-wider">Q<span className="text-purple-400">MAIL</span></h1>
-            <p className="text-gray-400 mt-2">Quantum-secure communication</p>
+            <h1 className="text-3xl font-bold text-primary tracking-wider">Q<span className="text-secondary">MAIL</span></h1>
+            <p className="text mt-2">Quantum-secure communication</p>
           </div>
-          
           <div className="space-y-6">
             <div className="space-y-2">
-              <label className="text-gray-300 block">Email</label>
+              <label className="text block">Email</label>
               <input 
                 type="email" 
-                className="w-full bg-gray-800 border border-gray-700 rounded-lg p-3 text-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full bg-input border border-border rounded-lg p-3 text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
                 placeholder="your.email@qmail.com"
               />
             </div>
-            
             <div className="space-y-2">
-              <label className="text-gray-300 block">Password</label>
+              <label className="text block">Password</label>
               <input 
                 type="password" 
-                className="w-full bg-gray-800 border border-gray-700 rounded-lg p-3 text-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full bg-input border border-border rounded-lg p-3 text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
                 placeholder="••••••••••••"
               />
             </div>
-            
             <div className="pt-2">
-              <button className="w-full bg-gradient-to-r from-blue-600 to-purple-600 text-white py-3 rounded-lg hover:opacity-90 transition-opacity shadow-lg">
+              <button className="w-full bg-primary text-primary-foreground py-3 rounded-lg hover:bg-primary/90 transition-opacity shadow-lg">
                 Sign In
               </button>
             </div>
-            
-            <div className="text-center text-gray-500 text-sm">
-              <p>Don't have an account? <a href="#" className="text-blue-400 hover:underline">Create one</a></p>
+            <div className="text-center text text-sm">
+              <p>Don't have an account? <a href="#" className="text-primary hover:underline">Create one</a></p>
             </div>
           </div>
         </div>
@@ -363,17 +358,17 @@ export default function EmailClient() {
   }
 
   return (
-    <div className="min-h-screen bg-black text-gray-100 flex flex-col">
+    <div className="min-h-screen bg-background text-foreground flex flex-col">
       {/* Top Navigation Bar */}
-      <nav className="bg-gray-900 border-b border-gray-800 p-4 flex items-center justify-between relative">
+      <nav className="bg-card border-b border-border p-4 flex items-center justify-between relative">
         <div className="flex items-center">
           <button 
             onClick={() => setMobileNavOpen(!mobileNavOpen)}
-            className="md:hidden mr-4 text-gray-400 hover:text-white"
+            className="md:hidden mr-4 text hover:text-foreground"
           >
             <Menu size={24} />
           </button>
-          <span className="text-xl font-semibold text-blue-400 tracking-wider">Q<span className="text-purple-400">MAIL</span></span>
+          <span className="text-xl font-semibold text-primary tracking-wider">Q<span className="text-secondary">MAIL</span></span>
         </div>
         
         <div className="hidden md:flex items-center space-x-8">
@@ -382,7 +377,7 @@ export default function EmailClient() {
             label="Inbox" 
             active={activeTab === 'inbox'} 
             onClick={() => setActiveTab('inbox')} 
-            count={emails.inbox.filter(e => !e.read).length}
+            count={emails.inbox.filter(e => !e.is_read).length}
           />
           <NavButton 
             icon={<Send size={20} />} 
@@ -395,7 +390,7 @@ export default function EmailClient() {
         <div className="flex items-center space-x-4 user-menu-container">
           <button 
             onClick={toggleUserMenu}
-            className="rounded-full bg-gray-800 p-2 text-gray-400 hover:text-white hover:bg-gray-700 transition-colors"
+            className="rounded-full bg-muted p-2 text hover:text-foreground hover:bg-muted/70 transition-colors"
             aria-expanded={userMenuOpen}
             aria-haspopup="true"
           >
@@ -404,15 +399,15 @@ export default function EmailClient() {
           
           {/* User Popup Menu */}
           {userMenuOpen && (
-            <div className="absolute right-4 top-16 w-64 bg-gray-800 rounded-lg shadow-lg overflow-hidden z-50">
-              <div className="p-4 border-b border-gray-700">
+            <div className="absolute right-4 top-16 w-64 bg-card rounded-lg shadow-lg overflow-hidden z-50">
+              <div className="p-4 border-b border-border">
                 <div className="flex items-center space-x-3">
-                  <div className="bg-blue-500 rounded-full p-2">
-                    <CircleUserRound size={24} className="text-white" />
+                  <div className="bg-primary rounded-full p-2">
+                    <CircleUserRound size={24} className="text-primary-foreground" />
                   </div>
                   <div>
-                    <p className="text-white font-medium">{user.name}</p>
-                    <p className="text-gray-400 text-sm">{user.email}</p>
+                    <p className="text-primary-foreground font-medium">{user.name}</p>
+                    <p className="text text-sm">{user.email}</p>
                   </div>
                 </div>
               </div>
@@ -420,7 +415,7 @@ export default function EmailClient() {
               <div>
                 <button 
                   onClick={handleLogout}
-                  className="w-full text-left px-4 py-3 text-gray-300 hover:bg-gray-700 flex items-center space-x-2 transition-colors"
+                  className="w-full text-left px-4 py-3 text hover:bg-muted/70 flex items-center space-x-2 transition-colors"
                 >
                   <LogOut size={18} />
                   <span>Log out</span>
@@ -433,10 +428,10 @@ export default function EmailClient() {
 
       {/* Mobile Navigation Menu */}
       {mobileNavOpen && (
-        <div className="md:hidden bg-gray-900 border-b border-gray-800">
+        <div className="md:hidden bg-card border-b border-border">
           <div className="p-2 flex flex-col">
             <button 
-              className={`p-3 text-left flex items-center ${activeTab === 'inbox' ? 'bg-gray-800 text-blue-400' : 'text-gray-400'} rounded-lg`}
+              className={`p-3 text-left flex items-center ${activeTab === 'inbox' ? 'bg-muted text-primary' : 'text'} rounded-lg`}
               onClick={() => {
                 setActiveTab('inbox');
                 setMobileNavOpen(false);
@@ -444,15 +439,15 @@ export default function EmailClient() {
             >
               <Inbox size={20} className="mr-3" />
               <span>Inbox</span>
-              {emails.inbox.filter(e => !e.read).length > 0 && (
-                <span className="ml-auto bg-blue-500 text-xs rounded-full px-2 py-1">
-                  {emails.inbox.filter(e => !e.read).length}
+              {emails.inbox.filter(e => !e.is_read).length > 0 && (
+                <span className="ml-auto bg-primary text-primary-foreground text-xs rounded-full px-2 py-1">
+                  {emails.inbox.filter(e => !e.is_read).length}
                 </span>
               )}
             </button>
             
             <button 
-              className={`p-3 text-left flex items-center ${activeTab === 'sent' ? 'bg-gray-800 text-blue-400' : 'text-gray-400'} rounded-lg`}
+              className={`p-3 text-left flex items-center ${activeTab === 'sent' ? 'bg-muted text-primary' : 'text'} rounded-lg`}
               onClick={() => {
                 setActiveTab('sent');
                 setMobileNavOpen(false);
@@ -462,9 +457,9 @@ export default function EmailClient() {
               <span>Sent</span>
             </button>
             
-            <div className="border-t border-gray-800 mt-2 pt-2">
+            <div className="border-t border-border mt-2 pt-2">
               <button 
-                className="p-3 text-left flex items-center text-gray-400 rounded-lg"
+                className="p-3 text-left flex items-center text rounded-lg"
                 onClick={handleLogout}
               >
                 <LogOut size={20} className="mr-3" />
@@ -480,12 +475,12 @@ export default function EmailClient() {
         <main className="flex-1 flex flex-col p-4 overflow-hidden">
           {/* Section Header */}
           <div className="flex items-center justify-between mb-4">
-            <h1 className="text-2xl font-bold bg-gradient-to-r from-blue-400 to-purple-500 bg-clip-text text-transparent">
+            <h1 className="text-2xl font-bold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
               {activeTab.charAt(0).toUpperCase() + activeTab.slice(1)}
             </h1>
             <button 
               onClick={() => setComposeOpen(true)}
-              className="bg-gradient-to-r from-blue-600 to-purple-600 text-white px-4 py-2 rounded-lg flex items-center hover:opacity-90 transition-opacity shadow-lg shadow-blue-900/20"
+              className="bg-primary text-primary-foreground px-4 py-2 rounded-lg flex items-center hover:bg-primary/90 transition-opacity shadow-lg shadow-primary/20"
             >
               <Plus size={18} className="mr-2" />
               Compose
@@ -504,7 +499,7 @@ export default function EmailClient() {
         <div className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center p-4 z-50">
           <div className="bg-gray-900 border border-gray-800 rounded-lg shadow-2xl w-full max-w-2xl overflow-hidden">
             <div className="flex justify-between items-center border-b border-gray-800 p-4">
-              <h2 className="text-xl font-semibold text-blue-400">{selectedEmail.subject}</h2>
+              <h2 className="text-xl font-semibold text-primary">{selectedEmail.subject}</h2>
               <button 
                 onClick={() => setSelectedEmail(null)}
                 className="text-gray-400 hover:text-white"
@@ -537,7 +532,7 @@ export default function EmailClient() {
         <div className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center p-4 z-50">
           <div className="bg-gray-900 border border-gray-800 rounded-lg shadow-2xl w-full max-w-2xl overflow-hidden">
             <div className="flex justify-between items-center border-b border-gray-800 p-4">
-              <h2 className="text-xl font-semibold text-blue-400">New Message</h2>
+              <h2 className="text-xl font-semibold text-primary">New Message</h2>
               <button 
                 onClick={() => setComposeOpen(false)}
                 className="text-gray-400 hover:text-white"
@@ -552,7 +547,7 @@ export default function EmailClient() {
                 <input 
                   type="text" 
                   className="flex-1 bg-transparent focus:outline-none text-gray-300" 
-                  placeholder="recipient@example.com"
+                  placeholder="recipient@qmail.website"
                   value={composeData.to}
                   onChange={(e) => setComposeData({...composeData, to: e.target.value})}
                 />
@@ -605,7 +600,7 @@ function NavButton({ icon, label, active, onClick, count }) {
       onClick={onClick}
       className={`flex items-center space-x-2 px-4 py-2 rounded-lg transition-colors ${
         active 
-          ? 'text-blue-400 bg-gray-800' 
+          ? 'text-primary bg-gray-800' 
           : 'text-gray-400 hover:text-gray-200 hover:bg-gray-800'
       }`}
     >

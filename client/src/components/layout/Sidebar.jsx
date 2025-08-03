@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
@@ -6,6 +5,7 @@ import { Inbox, Send, Trash2, Edit3, Star, Settings, LogOut, Search, Mail } from
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
+import { ThemeToggle } from '@/components/ui/ThemeToggle';
 
 const navItems = [
   { name: 'Inbox', icon: Inbox, path: '/inbox' },
@@ -22,18 +22,18 @@ const Sidebar = ({ onComposeClick, onLogout }) => {
     <motion.aside
       initial={{ x: -300 }}
       animate={{ x: 0 }}
-      className="hidden md:flex md:w-64 lg:w-72 flex-col bg-slate-900 border-r border-slate-800 p-4 h-full"
-    >
+      className="hidden md:flex md:w-64 lg:w-72 flex-col bg-background border-r p-4 h-full">
+        
       <div className="flex items-center justify-between mb-8">
         <div className="flex items-center space-x-2">
-          <Mail className="h-8 w-8 text-sky-500" />
-          <h1 className="text-2xl font-bold bg-gradient-to-r from-sky-400 to-indigo-400 text-transparent bg-clip-text">QMail</h1>
+          <Mail className="h-8 w-8 text-primary" />
+          <h1 className="text-2xl font-bold bg-gradient-to-r from-primary to-secondary-foreground text-transparent bg-clip-text">QMail</h1>
         </div>
       </div>
 
       <Button
         onClick={onComposeClick}
-        className="mb-6 bg-gradient-to-r from-sky-500 to-indigo-600 hover:from-sky-600 hover:to-indigo-700 text-white shadow-md"
+        className="mb-6 bg-primary text-primary-foreground hover:bg-primary/90 shadow-md"
       >
         <Edit3 className="mr-2 h-4 w-4" /> Compose
       </Button>
@@ -45,8 +45,8 @@ const Sidebar = ({ onComposeClick, onLogout }) => {
             to={item.path}
             className={({ isActive }) =>
               `flex items-center px-3 py-2 rounded-md transition-colors ${isActive
-                ? 'bg-slate-800 text-sky-400'
-                : 'text-slate-300 hover:text-white hover:bg-slate-800'
+                ? 'bg-accent text-accent-foreground'
+                : 'text hover:text-foreground hover:bg-muted'
               }`
             }
           >
@@ -57,30 +57,33 @@ const Sidebar = ({ onComposeClick, onLogout }) => {
       </nav>
 
       <div className="mt-auto">
-        <div className="flex items-center justify-between p-3 rounded-md bg-slate-800/50">
+        <div className="flex items-center justify-between p-3 rounded-md bg-muted/50">
           <div className="flex items-center space-x-3">
             <Avatar>
               <AvatarImage src="" />
               <AvatarFallback>{userInitials}</AvatarFallback>
             </Avatar>
-            <div className="flex flex-col">
-              <span className="text-sm font-medium text-slate-200">{userEmail}</span>
-              {/* <span className="text-xs text-slate-400">Free Account</span> */}
+            <div className="flex flex-col min-w-0">
+              <span className="text-sm font-medium text-foreground truncate">{userEmail}</span>
+              {/* <span className="text-xs text">Free Account</span> */}
             </div>
           </div>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={onLogout}
-                className="h-8 w-8 rounded-full text-slate-400 hover:text-white hover:bg-slate-700"
-              >
-                <LogOut className="h-4 w-4" />
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent side="right">Logout</TooltipContent>
-          </Tooltip>
+          <div className="flex items-center">
+            <ThemeToggle />
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={onLogout}
+                  className="h-8 w-8 rounded-full text hover:text-foreground hover:bg-muted"
+                >
+                  <LogOut className="h-4 w-4" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent side="right">Logout</TooltipContent>
+            </Tooltip>
+          </div>
         </div>
       </div>
     </motion.aside>

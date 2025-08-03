@@ -1,69 +1,100 @@
-
+@import url('https://fonts.googleapis.com/css2?family=Fira+Mono:wght@400;500;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Fjord+One&display=swap');
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 @layer base {
   :root {
-    --background: 224 71% 4%; /* Darker blue-gray */
-    --foreground: 210 40% 98%; /* Light gray, almost white */
+    --background: 240 100% 99%;
+    --foreground: 207 53% 16%;
 
-    --card: 222.2 47.4% 11.2%; /* Default card, slightly lighter than bg */
-    --card-foreground: 210 40% 98%;
-
-    --popover: 220 50% 8%; /* Darker popover */
-    --popover-foreground: 210 40% 98%;
-
-    --primary: 205 90% 50%; /* Vibrant Sky Blue */
-    --primary-foreground: 210 40% 98%; /* White text on primary */
-
-    --secondary: 217.2 32.6% 17.5%; /* Muted blue-gray */
-    --secondary-foreground: 210 40% 98%;
-
-    --muted: 220 20% 25%; /* Darker muted */
-    --muted-foreground: 215 20.2% 65.1%; /* Lighter muted text */
-
-    --accent: 200 80% 55%; /* Slightly lighter sky blue for accents */
-    --accent-foreground: 210 40% 98%;
-
-    --destructive: 0 70% 50%; /* Vibrant Red */
+    --card: 240 100% 99%;
+    --card-foreground: 207 53% 16%;
+ 
+    --popover: 240 100% 99%;
+    --popover-foreground: 207 53% 16%;
+ 
+    --primary: 208 98% 64%;
+    --primary-foreground: 207 53% 16%;
+ 
+    --secondary: 206 54% 40%;
+    --secondary-foreground: 240 100% 99%;
+ 
+    --muted: 206 30% 95%;
+    --muted-foreground: 206 54% 40%;
+ 
+    --accent: 206 30% 95%;
+    --accent-foreground: 206 54% 40%;
+ 
+    --destructive: 0 84% 60%;
     --destructive-foreground: 210 40% 98%;
 
-    --border: 217.2 32.6% 25.5%; /* Slightly lighter border */
-    --input: 217.2 32.6% 22.5%; /* Darker input fields */
-    --ring: 205 80% 60%; /* Sky blue for focus rings */
-
-    --radius: 0.75rem; /* Slightly larger radius for modern feel */
+    --border: 206 30% 95%;
+    --input: 206 30% 95%;
+    --ring: 208 98% 64%;
+ 
+    --radius: 0.5rem;
   }
-
+ 
   .dark {
-    --background: 224 71% 4%;
-    --foreground: 210 40% 98%;
-    --card: 222.2 47.4% 11.2%;
-    --card-foreground: 210 40% 98%;
-    --popover: 220 50% 8%;
-    --popover-foreground: 210 40% 98%;
-    --primary: 205 90% 50%;
-    --primary-foreground: 210 40% 98%;
-    --secondary: 217.2 32.6% 17.5%;
-    --secondary-foreground: 210 40% 98%;
-    --muted: 220 20% 25%;
-    --muted-foreground: 215 20.2% 65.1%;
-    --accent: 200 80% 55%;
-    --accent-foreground: 210 40% 98%;
+    --background: 207 53% 16%;
+    --foreground: 240 100% 99%;
+    --text: 240, 11%, 96%;
+ 
+    --card: 207 53% 20%;
+    --card-foreground: 240 100% 99%;
+ 
+    --popover: 207 53% 16%;
+    --popover-foreground: 240 100% 99%;
+ 
+    --primary: 208 98% 64%;
+    --primary-foreground: 207 53% 16%;
+ 
+    --secondary: 206 54% 40%;
+    --secondary-foreground: 240 100% 99%;
+ 
+    --muted: 206 54% 25%;
+    --muted-foreground: 206 54% 70%;
+ 
+    --accent: 206 54% 25%;
+    --accent-foreground: 240 100% 99%;
+ 
     --destructive: 0 70% 50%;
     --destructive-foreground: 210 40% 98%;
-    --border: 217.2 32.6% 25.5%;
-    --input: 217.2 32.6% 22.5%;
-    --ring: 205 80% 60%;
+ 
+    --border: 206 54% 25%;
+    --input: 206 54% 30%;
+    --ring: 208 98% 64%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background;
+    color: hsl(var(--foreground));
+    font-feature-settings: "rlig" 1, "calt" 1, "ss01" 1;
+    font-family: 'Fjord One', serif;
+  }
+
+  .dark body {
+    @apply bg-gradient-to-br from-slate-900 via-slate-800 to-gray-900;
+    color: hsl(var(--text));
+  }
+
+  .dark * {
+    color: hsl(var(--text));
   }
 }
 
 @layer base {
   .light {
-    --background: 0 0% 100%; /* White background */
-    --foreground: 0 0% 0%; /* Black text */
-    --card: 0 0% 98%; /* Light card background */
+    --background: 240, 11%, 95%; 
+    --foreground: 0 0% 10%; /* Black text */
+    --card: 0 0% 95%; /* Light card background */
     --card-foreground: 0 0% 0%;
     --popover: 0 0% 95%;
     --popover-foreground: 0 0% 0%;
@@ -77,9 +108,9 @@
     --accent-foreground: 0 0% 100%;
     --destructive: 0 70% 50%;
     --destructive-foreground: 0 0% 100%;
-    --border: 0 0% 80%;
-    --input: 0 0% 90%;
-    --ring: 205 80% 60%;
+    --border: 206 30% 95%;
+    --input: 206 30% 95%;
+    --ring: 208 98% 64%;
   }
 }
 
@@ -88,12 +119,12 @@
     @apply border-border;
   }
   body {
-    @apply bg-background text-foreground;
-    font-feature-settings: "rlig" 1, "calt" 1, "ss01" 1; /* Added stylistic set for fonts */
-    font-family: 'Poppins', sans-serif; /* Using Inter as a modern sans-serif font */
+    @apply bg-background;
+    color: hsl(var(--foreground));
+    font-feature-settings: "rlig" 1, "calt" 1, "ss01" 1;
+    font-family: 'Fjord One', serif;
   }
 
-  /* Custom scrollbar styles */
   .scrollbar-thin {
     scrollbar-width: thin;
     scrollbar-color: hsl(var(--muted)) hsl(var(--background));
@@ -115,7 +146,6 @@
     background-color: hsl(var(--secondary));
   }
 
-  /* Prose styles for email body rendering */
   .prose {
     h1,h2,h3,h4,h5,h6 { @apply font-semibold; }
     a { @apply text-primary hover:text-primary/80 transition-colors; }
@@ -138,3 +168,39 @@
 
 /* Add Inter font from Google Fonts */
 @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
+
+@layer utilities {
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  
+  @keyframes fadeInFromLeft {
+    from { opacity: 0; transform: translateX(-20px); }
+    to { opacity: 1; transform: translateX(0); }
+  }
+  
+  @keyframes fadeInFromRight {
+    from { opacity: 0; transform: translateX(20px); }
+    to { opacity: 1; transform: translateX(0); }
+  }
+  
+  @keyframes scaleIn {
+    from { opacity: 0; transform: scale(0.9); }
+    to { opacity: 1; transform: scale(1); }
+  }
+  
+  @keyframes spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+  }
+  
+  @keyframes pulse {
+    0% { opacity: 0.6; transform: scale(0.8); }
+    100% { opacity: 1; transform: scale(1); }
+  }
+
+  .animate-fadeIn {
+    animation: fadeIn 0.8s forwards;
+  }
+}

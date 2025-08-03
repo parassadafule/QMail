@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import { Eye, EyeOff, Mail, User, Lock } from 'lucide-react';
@@ -7,7 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/components/ui/use-toast';
 
-export const LoginPage = ({ onNavigateToSignup }) => {
+export const LoginPage = ({ onNavigateToSignup, onLoginSuccess }) => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const [qmail, setEmail] = useState('');
@@ -15,6 +15,9 @@ export const LoginPage = ({ onNavigateToSignup }) => {
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
+  const [isAuthenticated, setIsAuthenticated] = useState(() => {
+    return localStorage.getItem('token') ? true : false;
+  });
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -29,7 +32,7 @@ export const LoginPage = ({ onNavigateToSignup }) => {
     setIsLoading(true);
 
     try {
-      const response = await fetch("https://qmail.nextsquaretech.com/login", {  //(http://localhost:5000/login or http://192.168.1.8:5000/login)
+      const response = await fetch("http://localhost:5000/login", {  //(http://localhost:5000/login)
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -42,9 +45,9 @@ export const LoginPage = ({ onNavigateToSignup }) => {
       if (response.ok) {
         localStorage.setItem("token", data.token);
         localStorage.setItem("userEmail", data.qmail);
+        localStorage.setItem("userName", data.fullName);
         // console.log(data.qmail);
-
-        // Redirect to dashboard or homepage
+        if (onLoginSuccess) onLoginSuccess();
         navigate("/inbox");
       } else {
         setLoginError(data.message || "Login failed. Please check credentials.");
@@ -57,30 +60,41 @@ export const LoginPage = ({ onNavigateToSignup }) => {
     }
   };
 
+  useEffect(() => {
+      const token = localStorage.getItem('token');
+      if (token) {
+        setIsAuthenticated(true);
+        navigate('/inbox');
+      } else {
+        setIsAuthenticated(false);
+        navigate('/login');
+      }
+    }, [navigate]);
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3 }}
       className="flex justify-center items-center min-h-screen px-4">
-      <div className="w-full max-w-md p-8 space-y-8 bg-slate-800/50 backdrop-blur-sm rounded-xl shadow-xl border border-slate-700">
+      <div className="w-full max-w-md p-8 space-y-8 bg-background backdrop-blur-sm rounded-xl shadow-xl border">
         <div className="text-center">
-          <h2 className="mt-6 text-3xl font-bold text-slate-100">Welcome Back</h2>
-          <p className="mt-2 text-sm text-slate-400">Sign in to access your emails</p>
+          <h2 className="mt-6 text-3xl font-bold text-card-foreground">Welcome Back</h2>
+          <p className="mt-2 text-sm text">Sign in to access your mails</p>
         </div>
 
         <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
           {error && (
-            <div className="p-3 text-sm font-medium text-red-500 bg-red-500/10 border border-red-500/20 rounded-md">
+            <div className="p-3 text-sm font-medium text-destructive bg-destructive/10 border border-destructive/20 rounded-md">
               {error}
             </div>
           )}
 
           <div className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="qmail" className="text-slate-300">Email</Label>
+              <Label htmlFor="qmail" className="text">Email</Label>
               <div className="relative">
-                <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-slate-400" />
+                <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text" />
                 <Input
                   id="qmail"
                   name="qmail"
@@ -89,16 +103,16 @@ export const LoginPage = ({ onNavigateToSignup }) => {
                   required
                   value={qmail}
                   onChange={(e) => setEmail(e.target.value)}
-                  className="pl-10 bg-slate-900/50 border-slate-700 text-slate-100 placeholder:text-slate-500"
-                  placeholder="you@example.com"
+                  className="pl-10 bg-input border-input text-foreground placeholder:text"
+                  placeholder="you@qmail.website"
                 />
               </div>
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="password" className="text-slate-300">Password</Label>
+              <Label htmlFor="password" className="text">Password</Label>
               <div className="relative">
-                <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-slate-400" />
+                <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text" />
                 <Input
                   id="password"
                   name="password"
@@ -107,13 +121,13 @@ export const LoginPage = ({ onNavigateToSignup }) => {
                   required
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="pl-10 pr-10 bg-slate-900/50 border-slate-700 text-slate-100 placeholder:text-slate-500"
+                  className="pl-10 pr-10 bg-input border-input text-foreground placeholder:text"
                   placeholder="••••••••"
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-slate-400 hover:text-slate-300"
+                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text hover:text-foreground"
                 >
                   {showPassword ? (
                     <EyeOff className="h-4 w-4" />
@@ -128,19 +142,19 @@ export const LoginPage = ({ onNavigateToSignup }) => {
           <Button
             type="submit"
             disabled={isLoading}
-            className="w-full py-2 bg-gradient-to-r from-sky-500 to-indigo-600 hover:from-sky-600 hover:to-indigo-700 text-white font-medium rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-sky-500 focus:ring-offset-slate-800"
+            className="w-full py-2 bg-primary text-primary-foreground hover:bg-primary/90"
           >
             {isLoading ? "Signing in..." : "Sign in"}
           </Button>
         </form>
 
         <div className="text-center mt-4">
-          <p className="text-sm text-slate-400">
+          <p className="text-sm text">
             Don't have an account?{" "}
             <button
               type="button"
               onClick={onNavigateToSignup}
-              className="font-medium text-sky-400 hover:text-sky-300 focus:outline-none focus:underline transition ease-in-out duration-150"
+              className="font-medium text-primary hover:text-primary/90 focus:outline-none focus:underline transition ease-in-out duration-150"
             >
               Sign up
             </button>
@@ -223,19 +237,19 @@ export const SignupPage = ({ onNavigateToLogin }) => {
       return;
     }
 
-    const fullQmail = `${qmail}@qmail.website`; // <-- important!
+    const fullQmail = `${qmail}@qmail.website`;
 
     setIsLoading(true);
 
     try {
-      const response = await fetch("https://qmail.nextsquaretech.com/signup", {
+      const response = await fetch("http://localhost:5000/signup", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
           fullName,
-          qmail: fullQmail, // <-- send full email
+          qmail: fullQmail,
           password,
         }),
       });
@@ -268,109 +282,102 @@ export const SignupPage = ({ onNavigateToLogin }) => {
       transition={{ duration: 0.3 }}
       className="flex justify-center items-center min-h-screen px-4"
     >
-      <div className="w-full max-w-md p-8 space-y-8 bg-slate-800/50 backdrop-blur-sm rounded-xl shadow-xl border border-slate-700">
+      <div className="w-full max-w-lg p-8 space-y-8 bg-card backdrop-blur-sm rounded-xl shadow-xl border">
         <div className="text-center">
-          <h2 className="mt-6 text-3xl font-bold text-slate-100">Create Account</h2>
-          <p className="mt-2 text-sm text-slate-400">Sign up to get started with QMail</p>
+          <h2 className="text-3xl font-bold text-card-foreground">Create your Account</h2>
+          <p className="mt-2 text-sm text">Join us to experience secure communication</p>
         </div>
 
         <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
           {error && (
-            <div className="p-3 text-sm font-medium text-red-500 bg-red-500/10 border border-red-500/20 rounded-md">
+            <div className="p-3 text-sm font-medium text-destructive bg-destructive/10 border border-destructive/20 rounded-md">
               {error}
             </div>
           )}
 
-          <div className="space-y-4">
+          <div className="grid grid-cols-1 gap-y-6">
             <div className="space-y-2">
-              <Label htmlFor="fullName" className="text-slate-300">Full Name</Label>
+              <Label htmlFor="fullName" className="text">Full Name</Label>
               <div className="relative">
-                <User className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-slate-400" />
+                <User className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text" />
                 <Input
                   id="fullName"
                   name="fullName"
                   type="text"
-                  autoComplete="fullName"
+                  autoComplete="name"
                   required
                   value={fullName}
                   onChange={(e) => {
                     setfullName(e.target.value);
                     validatefullName(e.target.value);
                   }}
-                  className="pl-10 bg-slate-900/50 border-slate-700 text-slate-100 placeholder:text-slate-500"
-                  placeholder="Enter your name"
+                  className={`pl-10 bg-input border-input text-foreground placeholder:text ${fullNameError ? 'border-destructive' : ''}`}
+                  placeholder="John Doe"
                 />
               </div>
-              {fullNameError && <p className="mt-1 text-xs text-red-400">{fullNameError}</p>}
+              {fullNameError && <p className="text-xs text-destructive">{fullNameError}</p>}
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="qmail" className="text-slate-300">Qmail</Label>
-              <div className="flex items-center">
-                <div className="relative flex w-full">
-                  <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-slate-400" />
-                  <Input
-                    id="qmail"
-                    name="qmail"
-                    type="text"
-                    autoComplete="qmail"
-                    required
-                    value={qmail}
-                    onChange={(e) => {setEmail(e.target.value);validateQmail(e.target.value);}}
-                    className="rounded-r pl-10 pr-2 bg-slate-900/50 border border-r border-slate-700 text-slate-100 placeholder:text-slate-500 w-full"
-                    placeholder="you"/>
-                  <span className="flex items-center px-3 rounded-r-md border border-l-0 border-slate-700 bg-slate-900/50 text-slate-400 text-sm">
-                    @qmail.website
-                  </span>
-                </div>
-              </div>
-              {qmailError && <p className="mt-1 text-xs text-red-400">{qmailError}</p>}
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="password" className="text-slate-300">Password</Label>
-              <div className="relative">
-                <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-slate-400" />
+              <Label htmlFor="qmail" className="text">Qmail ID</Label>
+              <div className="relative flex items-center">
+                <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text" />
                 <Input
-                  id="password"
+                  id="qmail"
+                  name="qmail"
+                  type="text"
+                  autoComplete="email"
+                  required
+                  value={qmail}
+                  onChange={(e) => {
+                    setEmail(e.target.value);
+                    validateQmail(e.target.value);
+                  }}
+                  className={`pl-10 pr-28 bg-input border-input text-foreground placeholder:text ${qmailError ? 'border-destructive' : ''}`}
+                  placeholder="your-unique-id"
+                />
+                <span className="absolute right-3 text-sm text">@qmail.website</span>
+              </div>
+              {qmailError && <p className="text-xs text-destructive">{qmailError}</p>}
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="password-signup" className="text">Password</Label>
+              <div className="relative">
+                <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text" />
+                <Input
+                  id="password-signup"
                   name="password"
-                  type={showPassword ? "text" : "password"}
+                  type={showPassword ? 'text' : 'password'}
                   autoComplete="new-password"
                   required
                   value={password}
                   onChange={(e) => {
                     setPassword(e.target.value);
                     validatePassword(e.target.value);
-                    if (confirmPassword) {
-                      validateConfirmPassword(confirmPassword);
-                    }
                   }}
-                  className="pl-10 pr-10 bg-slate-900/50 border-slate-700 text-slate-100 placeholder:text-slate-500"
+                  className={`pl-10 pr-10 bg-input border-input text-foreground placeholder:text ${passwordError ? 'border-destructive' : ''}`}
                   placeholder="••••••••"
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-slate-400 hover:text-slate-300"
+                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text hover:text-foreground"
                 >
-                  {showPassword ? (
-                    <EyeOff className="h-4 w-4" />
-                  ) : (
-                    <Eye className="h-4 w-4" />
-                  )}
+                  {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                 </button>
               </div>
-              {passwordError && <p className="mt-1 text-xs text-red-400">{passwordError}</p>}
+              {passwordError && <p className="text-xs text-destructive">{passwordError}</p>}
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="confirmPassword" className="text-slate-300">Confirm Password</Label>
+              <Label htmlFor="confirmPassword" className="text">Confirm Password</Label>
               <div className="relative">
-                <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-slate-400" />
+                <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text" />
                 <Input
                   id="confirmPassword"
                   name="confirmPassword"
-                  type={showConfirmPassword ? "text" : "password"}
+                  type={showConfirmPassword ? 'text' : 'password'}
                   autoComplete="new-password"
                   required
                   value={confirmPassword}
@@ -378,41 +385,37 @@ export const SignupPage = ({ onNavigateToLogin }) => {
                     setConfirmPassword(e.target.value);
                     validateConfirmPassword(e.target.value);
                   }}
-                  className="pl-10 pr-10 bg-slate-900/50 border-slate-700 text-slate-100 placeholder:text-slate-500"
+                  className={`pl-10 pr-10 bg-input border-input text-foreground placeholder:text ${confirmPasswordError ? 'border-destructive' : ''}`}
                   placeholder="••••••••"
                 />
                 <button
                   type="button"
                   onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-slate-400 hover:text-slate-300"
+                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text hover:text-foreground"
                 >
-                  {showConfirmPassword ? (
-                    <EyeOff className="h-4 w-4" />
-                  ) : (
-                    <Eye className="h-4 w-4" />
-                  )}
+                  {showConfirmPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                 </button>
               </div>
-              {confirmPasswordError && <p className="mt-1 text-xs text-red-400">{confirmPasswordError}</p>}
+              {confirmPasswordError && <p className="text-xs text-destructive">{confirmPasswordError}</p>}
             </div>
           </div>
 
           <Button
             type="submit"
             disabled={isLoading}
-            className="w-full py-2 bg-gradient-to-r from-sky-500 to-indigo-600 hover:from-sky-600 hover:to-indigo-700 text-white font-medium rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-sky-500 focus:ring-offset-slate-800"
+            className="w-full py-2 bg-primary text-primary-foreground hover:bg-primary/90"
           >
-            {isLoading ? "Creating account..." : "Create account"}
+            {isLoading ? "Creating Account..." : "Sign up"}
           </Button>
         </form>
 
         <div className="text-center mt-4">
-          <p className="text-sm text-slate-400">
+          <p className="text-sm text">
             Already have an account?{" "}
             <button
               type="button"
               onClick={onNavigateToLogin}
-              className="font-medium text-sky-400 hover:text-sky-300 focus:outline-none focus:underline transition ease-in-out duration-150"
+              className="font-medium text-primary hover:text-primary/90 focus:outline-none focus:underline transition ease-in-out duration-150"
             >
               Sign in
             </button>

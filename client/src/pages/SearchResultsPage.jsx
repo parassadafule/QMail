@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { useLocation } from 'react-router-dom';
 import EmailList from '@/components/EmailList';
@@ -31,12 +30,12 @@ const SearchResultsPage = ({ allEmails, onEmailAction }) => {
       className="space-y-6"
     >
       <h1 className="text-3xl md:text-4xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-amber-400 via-orange-500 to-red-500">
-        Search Results for: <span className="text-slate-200">"{searchTerm}"</span>
+        Search Results for: <span className="text-foreground">"{searchTerm}"</span>
       </h1>
       {filteredEmails.length > 0 ? (
         <EmailList emails={filteredEmails} onEmailAction={onEmailAction} title={`Search results for "${searchTerm}"`} showNoEmailsMessage={false} />
       ) : (
-        <div className="flex flex-col items-center justify-center h-64 text-slate-500 p-8 bg-slate-800/50 backdrop-blur-sm rounded-xl shadow-xl">
+        <div className="flex flex-col items-center justify-center h-64 text p-8 bg-card/50 backdrop-blur-sm rounded-xl shadow-xl">
           <SearchX size={64} className="mb-4 opacity-50" />
           <h2 className="text-2xl font-semibold mb-2">No results found</h2>
           <p className="text-center">We couldn't find any emails matching your search for "{searchTerm}".</p>
