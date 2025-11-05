@@ -4,309 +4,402 @@ const jwt = require("jsonwebtoken");
 const User = require("../models/userSchema");
 const Email = require("../models/emailSchema");
 const multer = require("multer");
+const fs = require('fs');
+const FormData = require('form-data');
+const fetch = require('node-fetch');
+const axios = require('axios');
 const path = require("path");
 const router = express.Router();
 
-// const emailSchema = new mongoose.Schema({
-//     to: String, 
-//     from: String,
-//     subject: String,
-//     body: String,
-//     key: String, // Store key as hex
-//     qber: Number,
-//     file_name: String,
-//     file_hex: String,
-//     createdAt: { type: Date, default: Date.now },
-//     isRead: { type: Boolean, default: false },
-//   });
-//   const Email = mongoose.model('Email', emailSchema);
-
 require("dotenv").config();
 
+const JWT_SECRET = process.env.JWT_SECRET;
+
+const authenticateToken = (req, res, next) => {
+  const authHeader = req.headers["authorization"];
+  const token = authHeader && authHeader.split(" ")[1];
+
+  if (!token) {
+    return res.status(401).json({ message: "No token provided" });
+  }
+
+  jwt.verify(token, JWT_SECRET, (err, user) => {
+    if (err) {
+      return res.status(403).json({ message: "Invalid token. Login again" });
+    }
+    req.user = user;
+    next();
+  });
+};
 
 router.post("/signup", async (req, res) => {
-    const { Qmailid, email, password } = req.body;
-    console.log("Received signup request:", { Qmailid, email });
+  const { fullName, qmail, password } = req.body;
+  console.log("Received signup request:", { fullName, qmail, password });
 
-    if (!Qmailid || !email || !password) {
-        return res.status(400).json({ 
-            message: "All fields are required",
-            missing: {
-                Qmailid: !Qmailid,
-                email: !email,
-                password: !password
-            }
-        });
-    }
-
-    try {
-        const userExists = await User.findOne({ Qmailid });
-        if (userExists) {
-            return res.status(400).json({ message: "Qmailid already exists" });
-        }
-
-        const emailExists = await User.findOne({ email });
-        if (emailExists) {
-            return res.status(400).json({ message: "Email already exists" });
-        }
-
-        const salt = await bcrypt.genSalt(10);
-        const hashedPassword = await bcrypt.hash(password, salt);
-
-        const user = new User({ 
-            Qmailid, 
-            email, 
-            password: hashedPassword 
-        });
-
-        const savedUser = await user.save();
-        console.log("User saved successfully:", savedUser);
-
-        res.status(201).json({ 
-            message: "User registered successfully",
-            user: {
-                Qmailid: savedUser.Qmailid,
-                email: savedUser.email
-            }
-        });
-    } catch (error) {
-        console.error("Signup Error:", error);
-        if (error.name === 'ValidationError') {
-            return res.status(400).json({ 
-                message: "Validation error",
-                errors: error.errors 
-            });
-        }
-        return res.status(500).json({ 
-            message: "Internal server error",
-            error: error.message 
-        });
-    }
-});
-
-
-router.post("/login", async (req, res) => {
-    const { Qmailid, password } = req.body;
-
-    try {
-        const user = await User.findOne({ Qmailid });
-        if (!user) {
-            return res.status(401).json({ message: "User not found" });
-        }
-
-        if (!await bcrypt.compare(password, user.password)) {
-            return res.status(401).json({ message: "Invalid Qmailid or password" });
-        }
-
-        const token = jwt.sign({ 
-            id: user._id,
-            email: user.email,
-            Qmailid: user.Qmailid
-        }, process.env.JWT_SECRET, { expiresIn: "1h" });
-
-        res.json({ 
-            message: "Login successful", 
-            token,
-            email: user.email,
-            Qmailid: user.Qmailid
-        });
-    } catch (error) {
-        console.error("Login Error:", error);
-        return res.status(500).json({ message: "Internal server error" });
-    }
-});
-
-router.get("/profile", authenticateToken, async (req, res) => {
-    try {
-        const user = await User.findById(req.user.id);
-        if (!user) {
-            return res.status(404).json({ message: "User not found" });
-        }
-        
-        res.json({
-            email: user.email,
-            Qmailid: user.Qmailid
-        });
-    } catch (error) {
-        console.error("Profile Error:", error);
-        res.status(500).json({ message: "Internal server error" });
-    }
-});
-
-router.get("/inbox", authenticateToken, async (req, res) => {
-  try {
-    const userEmail = req.user.email;
-    if (!userEmail) {
-      return res.status(400).json({ message: "User email not found in token" });
-    }
-
-    const inboxEmails = await Email.find({ to: userEmail })
-      .sort({ createdAt: -1 })
-      .select('from to subject body isRead createdAt _id');
-
-    return res.json({ 
-      inbox_emails: inboxEmails || [],
-      message: inboxEmails.length === 0 ? "No emails found" : "Emails retrieved successfully"
-    });
-  } catch (error) {
-    console.error("Inbox Error:", error);
-    return res.status(500).json({ 
-      message: "Internal server error",
-      error: error.message 
+  if (!fullName || !qmail || !password) {
+    return res.status(400).json({
+      message: "All fields are required",
+      missing: {
+        fullName: !fullName,
+        qmail: !qmail,
+        password: !password
+      }
     });
   }
-});
 
-router.get("/sent", authenticateToken, async (req, res) => {
   try {
-    const userEmail = req.user.email;
-    if (!userEmail) {
-      return res.status(400).json({ message: "User email not found in token" });
+    const emailExists = await User.findOne({ qmail });
+    if (emailExists) {
+      return res.status(400).json({ message: "Qmail already exists" });
     }
 
-    const sentEmails = await Email.find({ from: userEmail })
-      .sort({ createdAt: -1 })
-      .select('from to subject body isRead createdAt _id');
+    const salt = await bcrypt.genSalt(10);
+    const hashedPassword = await bcrypt.hash(password, salt);
 
-    return res.json({ 
-      sent_emails: sentEmails || [],
-      message: sentEmails.length === 0 ? "No sent emails found" : "Sent emails retrieved successfully"
+    const user = new User({
+      fullName,
+      qmail,
+      password: hashedPassword
+    });
+
+    const savedUser = await user.save();
+    console.log("User saved successfully:", savedUser);
+
+    res.status(201).json({
+      message: "User registered successfully",
+      user: {
+        fullName: savedUser.fullName,
+        qmail: savedUser.qmail
+      }
     });
   } catch (error) {
-    console.error("Sent Emails Error:", error);
-    return res.status(500).json({ 
-      message: "Internal server error",
-      error: error.message 
-    });
-  }
-});
-
-// Send email endpoint
-// Configure multer for file uploads
-const storage = multer.diskStorage({
-    destination: (req, file, cb) => {
-        cb(null, "uploads/"); // Directory to save uploaded files
-    },
-    filename: (req, file, cb) => {
-        cb(null, Date.now() + path.extname(file.originalname)); // Unique filename
-    },
-});
-
-const upload = multer({ storage });
-
-router.post('/send', authenticateToken, upload.single('file'), async (req, res) => {
-    try {
-      const { to, subject, body } = req.body;
-      const from = req.user.email; // Sender from JWT
-      const file = req.file; // Uploaded file
-  
-      if (!to || !subject || !body) {
-        return res.status(400).json({
-          error: 'Email data with to, subject, and body is required',
-        });
-      }
-  
-      // Calculate key length (mimicking Flask)
-      const subjectLength = Buffer.from(subject, 'utf-8').length;
-      const bodyLength = Buffer.from(body, 'utf-8').length;
-      let key_length = Math.max(128, Math.max(subjectLength, bodyLength) * 8);
-  
-      let file_content = null;
-      let file_name = null;
-      let file_hex = null;
-      if (file) {
-        file_content = require('fs').readFileSync(file.path); // Read file
-        key_length += file_content.length;
-        file_name = file.filename;
-      }
-  
-      // Generate quantum key (replace with actual implementation)
-    //   const { key, qber } = await generate_quantum_key({ key_length, eavesdropping: false });
-      const { key, qber } = await qkd_service.generate_quantum_key({ key_length, eavesdropping: false });
-  
-      // Encrypt file if present
-      if (file) {
-        const file_key_offset = subjectLength + bodyLength;
-        file_hex = encrypt_file(file_content, key.slice(file_key_offset));
-      }
-  
-      // Encrypt email data
-      const email_data = { to, subject, body, from };
-      const encrypted_email = encryption_service.encrypt_email(email_data, key);
-  
-      // Store in MongoDB
-      const email_doc = new Email({
-        to,
-        from,
-        subject: encrypted_email.subject,
-        body: encrypted_email.body,
-        key: key.toString('hex'), // Store as hex
-        qber,
-        file_name,
-        file_hex,
-        isRead: false,
-      });
-      const savedEmail = await email_doc.save();
-  
-      // Send email
-      let body_with_file = encrypted_email.body;
-      if (file_hex) {
-        body_with_file += `\n\nAttachment (hex): ${file_hex.slice(0, 50)}... (download via API)`;
-      }
-      const result = await send_email({
-        encrypted_body: body_with_file,
-        to,
-        subject: encrypted_email.subject,
-      });
-  
-      if (result.status === 'error') {
-        return res.status(500).json({ error: result.error });
-      }
-  
-      // Response matching Flask
-      res.status(200).json({
-        encrypted_email,
-        qber,
-        status: result.status,
-        email_id: savedEmail._id.toString(),
-        file_name,
-      });
-    } catch (error) {
-      console.error('Send Email Error:', error);
-      res.status(500).json({
-        error: `Server error: ${error.message}`,
+    console.error("Signup Error:", error);
+    if (error.name === 'ValidationError') {
+      return res.status(400).json({
+        message: "Validation error",
+        errors: error.errors
       });
     }
-  });
-
-// Get email by ID
-router.get("/email/:id", authenticateToken, async (req, res) => {
-  try {
-    const email = await Email.findById(req.params.id);
-    
-    if (!email) {
-      return res.status(404).json({ message: "Email not found" });
-    }
-
-    // Check if user has access to this email
-    if (email.to !== req.user.email && email.from !== req.user.email) {
-      return res.status(403).json({ message: "Unauthorized access to email" });
-    }
-
-    // Mark as read if recipient is viewing
-    if (email.to === req.user.email && !email.isRead) {
-      email.isRead = true;
-      await email.save();
-    }
-
-    return res.json({ email });
-  } catch (error) {
-    console.error("Get Email Error:", error);
     return res.status(500).json({
-      message: "Failed to fetch email",
+      message: "Internal server error",
       error: error.message
     });
   }
 });
 
-module.exports = router; 
+router.post("/login", async (req, res) => {
+  const { qmail, password } = req.body;
+
+  try {
+    const user = await User.findOne({ qmail });
+    if (!user) {
+      return res.status(401).json({ message: "User not found" });
+    }
+
+    if (!await bcrypt.compare(password, user.password)) {
+      return res.status(401).json({ message: "Invalid qmail or password" });
+    }
+
+    req.session = req.session || {};
+    req.session.smtpPassword = password;
+
+    const token = jwt.sign({
+      sub: user.qmail,
+      id: user._id,
+      qmail: user.qmail,
+      fullName: user.fullName
+    }, process.env.JWT_SECRET, { expiresIn: "1h" });
+
+    res.json({
+      message: "Login successful",
+      token,
+      qmail: user.qmail,
+      fullName: user.fullName
+    });
+  } catch (error) {
+    console.error("Login Error:", error);
+    return res.status(500).json({ message: "Internal server error" });
+  }
+});
+
+router.get("/profile", authenticateToken, async (req, res) => {
+  try {
+    const user = await User.findById(req.user.id);
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    res.json({
+      qmail: user.qmail,
+      fullName: user.fullName
+    });
+  } catch (error) {
+    console.error("Profile Error:", error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+});
+
+router.get("/inbox", authenticateToken, async (req, res) => {
+  try {
+    const userEmail = req.user.qmail;
+    // console.log("User email from token:", userEmail);
+    if (!userEmail) {
+      return res.status(400).json({ message: "User qmail not found in token" });
+    }
+    const inboxEmails = await Email.find({ to: userEmail });
+    // console.log("Inbox emails found:", inboxEmails.length);
+    return res.json({
+      emails: inboxEmails || [],
+      message: inboxEmails.length === 0 ? "No emails found" : "Emails retrieved successfully"
+    });
+  } catch (error) {
+    console.error("Profile Error:", error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+});
+
+router.get("/sent", authenticateToken, async (req, res) => {
+  try {
+    const userEmail = req.user.qmail;
+    if (!userEmail) {
+      return res.status(400).json({ message: "User qmail not found in token" });
+    }
+
+    const sentEmails = await Email.find({ sender: userEmail })
+      .sort({ createdAt: -1 })
+      .lean(); 
+
+    return res.json({
+      emails: sentEmails || [],
+      message: sentEmails.length === 0 ? "No sent emails found" : "Sent emails retrieved successfully"
+    });
+  } catch (error) {
+    console.error("Sent Emails Error:", error);
+    return res.status(500).json({
+      message: "Internal server error",
+      error: error.message
+    });
+  }
+});
+
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    cb(null, "uploads/");
+  },
+  filename: (req, file, cb) => {
+    cb(null, Date.now() + path.extname(file.originalname));
+  },
+});
+
+const upload = multer({ dest: 'uploads/' });
+
+router.post('/send', authenticateToken, upload.single('file'), async (req, res) => {
+  let filePath = null;
+  try {
+    const { to, subject, body } = req.body;
+    const file = req.file;
+
+    // const emailExists = await User.findOne({ qmail: to });
+    // if (!emailExists) {
+    //   return res.status(400).json({ error: 'Recipient qmail does not exist' });
+    // }
+
+    if (!to || !subject || !body) {
+      return res.status(400).json({
+        error: 'Email data with to, subject, and body is required',
+      });
+    }
+
+    console.log('Received:', { to, subject, body, file: file?.originalname });
+
+    const formData = new FormData();
+    formData.append('to', to);
+    formData.append('subject', subject);
+    formData.append('body', body);
+
+    if (file) {
+      filePath = file.path;
+      const fileStream = fs.createReadStream(filePath);
+      formData.append('file', fileStream, file.originalname);
+    }
+
+    // console.log("File exists at:", filePath, fs.existsSync(filePath));
+    // console.log("File size:", fs.statSync(filePath).size);
+
+    const token = req.headers['authorization'].split(' ')[1];
+
+    console.log('Sending to Flask:', { to, subject, body, file: file?.originalname });
+
+  
+    let flaskRes;
+    try {
+      flaskRes = await axios.post('http://localhost:8000/encrypt', formData, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          ...formData.getHeaders(),
+        },
+      });
+    } catch (axiosError) {
+      console.error('Axios error:', axiosError.message, axiosError.stack);
+      if (axiosError.response) {
+        console.error('Flask response:', axiosError.response.data, axiosError.response.status);
+        return res.status(axiosError.response.status).json({
+          error: axiosError.response.data.error || 'Flask server error',
+          details: axiosError.response.data,
+        });
+      }
+      throw new Error(`Failed to connect to Flask: ${axiosError.message}`);
+    }
+
+    const flaskData = flaskRes.data;
+    console.log('Flask response:', flaskData);
+
+    if (flaskRes.status !== 200) {
+      console.error('Flask non-200 response:', flaskData);
+      return res.status(flaskRes.status).json({ error: flaskData.error || 'Flask server error' });
+    }
+
+    res.status(200).json({
+      encrypted_email: flaskData.encrypted_email,
+      qber: flaskData.qber,
+      status: flaskData.status,
+      email_id: flaskData.email_id,
+      file_name: flaskData.file_name,
+    });
+  } catch (error) {
+    console.error('Send Email Error:', error.message, error.stack);
+    return res.status(500).json({
+      error: `Server error: ${error.message}`,
+    });
+  } finally {
+    if (filePath) {
+      try {
+        fs.unlinkSync(filePath);
+      } catch (cleanupError) {
+        console.error('File cleanup error:', cleanupError);
+      }
+    }
+  }
+});
+
+router.post('/decrypt', authenticateToken, async (req, res) => {
+  try {
+    const { emailId } = req.body;
+    console.log("Decrypt request received for emailId:", emailId);
+    const token = req.headers.authorization?.split(' ')[1];
+
+    if (!emailId) {
+      return res.status(400).json({ message: 'Email ID is required' });
+    }
+
+    const email = await Email.findById(emailId);
+    if (!email) {
+      return res.status(404).json({ message: 'Email not found' });
+    }
+
+    const flaskRes = await axios.post('http://localhost:8000/decrypt', {
+      _id: emailId,
+    }, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
+    });
+
+    const flaskData = flaskRes.data;
+
+    if (flaskRes.status !== 200) {
+      console.error('Flask non-200 response:', flaskData);
+      return res.status(flaskRes.status).json({ error: flaskData.error || 'Flask server error' });
+    }
+
+    console.log('Flask decryption response:', flaskData);
+    
+    res.status(200).json({
+      message: 'Decryption successful',
+      decryptedContent: {
+        subject: flaskData.decryptedContent.decrypted_subject,
+        body: flaskData.decryptedContent.decrypted_body,
+        file: flaskData.decryptedContent.file || null,
+      },
+      status: flaskData.status,
+      email_id: email._id,
+    });
+
+  } catch (error) {
+    console.error('Decrypt Error:', error.message, error.stack);
+    res.status(500).json({ message: `Internal server error: ${error.message}` });
+  }
+});
+
+
+router.get('/qmail/:id', authenticateToken, async (req, res) => {
+  try {
+    const email = await Email.findById(req.params.id).lean();
+    if (!email) {
+      return res.status(404).json({ message: 'Email not found' });
+    }
+
+    if (email.to !== req.user.qmail && email.sender !== req.user.qmail) {
+      return res.status(403).json({ message: 'Unauthorized access' });
+    }
+
+    res.json({ email });
+  } catch (err) {
+    console.error('Error fetching email:', err);
+    res.status(500).json({ message: 'Internal server error' });
+  }
+});
+
+router.get('/download/:email_id', authenticateToken, async (req, res) => {
+  const emailId = req.params.email_id;
+  const token = req.headers['authorization'].split(' ')[1];
+  try {
+    const flaskResponse = await axios.get(`http://localhost:8000/download/${emailId}`, {
+      headers: {
+        Authorization: `Bearer ${token}`
+      },
+      responseType: 'stream',
+    });
+
+    res.setHeader('Content-Disposition', flaskResponse.headers['content-disposition']);
+    res.setHeader('Content-Type', flaskResponse.headers['content-type']);
+
+    flaskResponse.data.pipe(res);
+
+  } catch (error) {
+    console.error("Download error:", error.message);
+    if (error.response) {
+      return res.status(error.response.status).json({
+        error: error.response.data?.error || "Download failed"
+      });
+    }
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+router.get('/trash', authenticateToken, async (req, res) => {
+  try {
+    const userEmail = req.user.qmail;
+    if (!userEmail) {
+      return res.status(400).json({ message: "User qmail not found in token" });
+    }
+
+    const trashEmails = await Email.find({ to: userEmail, isDeleted: true })
+      .sort({ createdAt: -1 })
+      .lean();
+
+    return res.json({
+      emails: trashEmails || [],
+      message: trashEmails.length === 0 ? "No deleted emails found" : "Deleted emails retrieved successfully"
+    });
+  } catch (error) {
+    console.error("Trash Emails Error:", error);
+    return res.status(500).json({
+      message: "Internal server error",
+      error: error.message
+    });
+  }
+});
+
+module.exports = router;

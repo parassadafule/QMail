@@ -1,12 +1,12 @@
-
 import React, { useState } from 'react';
-import { Menu, X, Search, Mail, Edit3, Inbox, Send, Trash2 } from 'lucide-react';
+import { Menu, X, Search, Mail, Edit3, Inbox, Send, Trash2, LogOut } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger, SheetClose } from '@/components/ui/sheet';
 import { NavLink, useNavigate } from 'react-router-dom';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { motion } from 'framer-motion';
+import { ThemeToggle } from '@/components/ui/ThemeToggle';
 
 const navItems = [
   { name: 'Inbox', icon: Inbox, path: '/inbox' },
@@ -14,7 +14,7 @@ const navItems = [
   { name: 'Trash', icon: Trash2, path: '/trash' },
 ];
 
-const MobileHeader = ({ onMenuToggle, searchTerm, setSearchTerm, onSearchSubmit }) => {
+const MobileHeader = ({ onMenuToggle, searchTerm, setSearchTerm, onSearchSubmit, onLogout }) => {
   const navigate = useNavigate();
   const [isSheetOpen, setIsSheetOpen] = useState(false);
 
@@ -23,19 +23,27 @@ const MobileHeader = ({ onMenuToggle, searchTerm, setSearchTerm, onSearchSubmit 
     onSearchSubmit();
   };
 
+  const getInitials = (email) => {
+    if (!email) return '?';
+    return email.charAt(0).toUpperCase();
+  };
+
+  const userEmail = localStorage.getItem('userEmail') || 'user@qmail.website';
+  const userName = localStorage.getItem('userName') || 'User';
+
   return (
-    <header className="md:hidden sticky top-0 z-40 flex items-center justify-between p-4 bg-slate-800/80 backdrop-blur-md border-b border-slate-700 shadow-md">
+    <header className="md:hidden sticky top-0 z-40 flex items-center justify-between p-4 bg-background/80 backdrop-blur-md border-b shadow-md">
       <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>
         <SheetTrigger asChild>
-          <Button variant="ghost" size="icon" onClick={() => setIsSheetOpen(true)} className="text-slate-300 hover:text-sky-400">
+          <Button variant="ghost" size="icon" onClick={() => setIsSheetOpen(true)} className="text hover:text-accent-foreground">
             <Menu size={24} />
           </Button>
         </SheetTrigger>
-        <SheetContent side="left" className="w-72 bg-slate-800 border-r-slate-700 text-slate-100 p-0">
-          <SheetHeader className="p-6 border-b border-slate-700">
+        <SheetContent side="left" className="w-72 bg-background border-r text-foreground p-0">
+          <SheetHeader className="p-6 border-b">
             <SheetTitle className="flex items-center space-x-2">
-              <Mail size={28} className="text-sky-400" />
-              <span className="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-sky-400 to-indigo-500">MailApp</span>
+              <Mail size={28} className="text-primary" />
+              <span className="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-primary to-secondary-foreground">QMail</span>
             </SheetTitle>
           </SheetHeader>
           <div className="p-6 space-y-4">
@@ -44,7 +52,7 @@ const MobileHeader = ({ onMenuToggle, searchTerm, setSearchTerm, onSearchSubmit 
                 navigate('/compose');
                 setIsSheetOpen(false);
               }}
-              className="w-full bg-gradient-to-r from-sky-500 to-indigo-600 hover:from-sky-600 hover:to-indigo-700 text-white font-semibold py-3"
+              className="w-full bg-primary text-primary-foreground hover:bg-primary/90 font-semibold py-3"
             >
               <Edit3 size={18} className="mr-2" />
               Compose
@@ -58,8 +66,8 @@ const MobileHeader = ({ onMenuToggle, searchTerm, setSearchTerm, onSearchSubmit 
                   className={({ isActive }) =>
                     `flex items-center space-x-3 px-3 py-3 rounded-md transition-colors duration-200
                     ${isActive
-                      ? 'bg-sky-500/20 text-sky-300'
-                      : 'hover:bg-slate-700/50 text-slate-400 hover:text-slate-200'
+                      ? 'bg-accent text-accent-foreground'
+                      : 'hover:bg-muted/50 text hover:text-foreground'
                     }`
                   }
                 >
@@ -69,22 +77,38 @@ const MobileHeader = ({ onMenuToggle, searchTerm, setSearchTerm, onSearchSubmit 
               ))}
             </nav>
           </div>
-          <div className="absolute bottom-0 left-0 right-0 p-6 border-t border-slate-700">
-            <div className="flex items-center space-x-3">
-              <Avatar className="h-10 w-10 border-2 border-sky-500">
-                <AvatarImage src="https://i.pravatar.cc/40?u=userProfileMobile" alt="User Avatar" />
-                <AvatarFallback className="bg-gradient-to-tr from-sky-500 to-indigo-600 text-white">U</AvatarFallback>
-              </Avatar>
-              <div>
-                <p className="font-semibold text-sm text-slate-200">User Name</p>
-                <p className="text-xs text-slate-400">user@example.com</p>
+          <div className="absolute bottom-0 left-0 right-0 p-6 border-t">
+            <div className="flex items-center justify-between p-3 rounded-md bg-muted/50">
+              <div className="flex items-center space-x-3">
+                <Avatar className="h-10 w-10 border-2 border-primary">
+                  <AvatarImage src="" alt="User Avatar" />
+                  <AvatarFallback className="bg-gradient-to-br from-pink-500 to-rose-600 text-white text-xs md:text-sm">
+                    {getInitials(userEmail)}
+                  </AvatarFallback>
+                </Avatar>
+                <div className="flex flex-col">
+                  <span className="text-sm font-medium text-foreground">{userName}</span>
+                  <span className="text-xs text">{userEmail}</span>
+                </div>
               </div>
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => {
+                  setIsSheetOpen(false);
+                  if (onLogout) onLogout();
+                }}
+                className="h-8 w-8 rounded-full text hover:text-foreground hover:bg-muted"
+                aria-label="Logout"
+              >
+                <LogOut className="h-4 w-4" />
+              </Button>
             </div>
           </div>
         </SheetContent>
       </Sheet>
 
-      <motion.div 
+      <motion.div
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.3 }}
@@ -96,16 +120,17 @@ const MobileHeader = ({ onMenuToggle, searchTerm, setSearchTerm, onSearchSubmit 
             placeholder="Search mail..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full pl-10 pr-4 py-2 rounded-lg bg-slate-700/50 border-slate-600 placeholder-slate-400 text-slate-100 focus:ring-sky-500 focus:border-sky-500"
+            className="w-full pl-10 pr-4 py-2 rounded-lg bg-muted/50 border-input placeholder-muted-foreground text-foreground focus:ring-ring focus:border-primary"
           />
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-slate-400" />
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text" />
         </form>
       </motion.div>
-      
-      <div className="flex items-center">
+
+      <div className="flex items-center space-x-2">
+        <ThemeToggle />
         <Avatar className="h-8 w-8 md:hidden">
-          <AvatarImage src="https://i.pravatar.cc/32?u=userProfileMobileHeader" alt="User Avatar" />
-          <AvatarFallback className="bg-gradient-to-tr from-pink-500 to-rose-500 text-white text-xs">U</AvatarFallback>
+          <AvatarImage src="" alt="User Avatar" />
+          <AvatarFallback className="bg-gradient-to-tr from-pink-500 to-rose-500 text-white text-xs">{getInitials(userEmail)}</AvatarFallback>
         </Avatar>
       </div>
     </header>

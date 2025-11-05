@@ -1,0 +1,56 @@
+Email Encryption & Decryption Flow (with Code References)
+===========================================================
+
+1. **Key Generation**
+   - When an email is sent, a quantum-secure key is generated for encryption.
+   - Code: `app/services/qkd_service.py`, lines 27-32 (`generate_quantum_key`)
+   - Used in: `app/main.py`, lines 23-41 (inside `/encrypt` route)
+
+2. **Encrypting the Email**
+   - The subject and body of the email are encrypted using the generated key. Each character is XORed with a byte from the key, and the result is hex-encoded.
+   - Code: `app/services/encryption_service.py`, lines 3-29 (`encrypt_email`)
+   - Used in: `app/main.py`, lines 42-54 (inside `/encrypt` route)
+
+3. **Encrypting Attachments (if any)**
+   - If a file is attached, it is also encrypted using the same key (XOR, hex-encoded).
+   - Code: `app/services/encryption_service.py`, lines 67-80 (`encrypt_file`)
+   - Used in: `app/main.py`, lines 34-54 (inside `/encrypt` route)
+
+4. **Storing the Encrypted Email**
+   - The encrypted subject, body, file (if any), and the key are stored in the database.
+   - Code: `app/services/store_mail.py`, lines 11-38 (`store_email_key`)
+   - Used in: `app/main.py`, lines 55-61 (inside `/encrypt` route)
+   - Database schema: `models/emailSchema.js`, lines 3-17
+
+5. **Sending the Encrypted Email**
+   - The encrypted body and subject are sent to the recipient via SMTP.
+   - Code: `app/services/email_client.py`, lines 13-41 (`send_email`)
+   - Used in: `app/main.py`, lines 48-54 (inside `/encrypt` route)
+
+6. **Decrypting the Email**
+   - When the recipient wants to read the email, the encrypted subject and body are fetched from the database, and the same key is used to decrypt them (XOR, then decode from hex and UTF-8).
+   - Code: `app/services/encryption_service.py`, lines 31-61 (`decrypt_email`)
+   - Used in: `app/main.py`, lines 74-108 (inside `/decrypt` route)
+
+7. **Decrypting Attachments (if any)**
+   - If there is an attachment, it is decrypted using the same key (XOR, then decode from hex).
+   - Code: `app/services/encryption_service.py`, lines 82-115 (`decrypt_file`)
+   - Used in: `app/main.py`, lines 110-130 (inside `/download/<email_id>` route)
+
+
+**Summary:**
+- A quantum-secure key is generated for each email.
+- The email's subject, body, and any attachments are encrypted with this key using XOR and hex encoding.
+- The encrypted data and key are stored in the database.
+- To decrypt, the same key is used to reverse the process.
+
+**References:**
+- Key Generation: `app/services/qkd_service.py` (lines 27-32)
+- Email Encryption: `app/services/encryption_service.py` (lines 3-29)
+- File Encryption: `app/services/encryption_service.py` (lines 67-80)
+- Store Email: `app/services/store_mail.py` (lines 11-38)
+- Send Email: `app/services/email_client.py` (lines 13-41)
+- Email Decryption: `app/services/encryption_service.py` (lines 31-61)
+- File Decryption: `app/services/encryption_service.py` (lines 82-115)
+- Main Flow: `app/main.py` (see `/encrypt`, `/decrypt`, `/download/<email_id>` routes)
+- Database Schema: `models/emailSchema.js` (lines 3-17) 

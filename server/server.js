@@ -3,7 +3,6 @@ const session = require("express-session");
 const cors = require('cors');
 const connectDB = require('./config/database');
 const authRoutes = require('./routes/authRoutes');
-const { email_client, encryption_service, qkd_service, store_mail } = require('./services');
 require('dotenv').config();
 
 const app = express();
@@ -30,7 +29,7 @@ app.use(session({
 }));
 
 
-app.listen(port, () => {
+app.listen(port, '0.0.0.0', () => {
     console.log(`Server is running on port ${port}`);
 });
 

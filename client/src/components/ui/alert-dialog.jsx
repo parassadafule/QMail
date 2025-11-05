@@ -51,7 +51,7 @@ const AlertDialogTitle = React.forwardRef(({ className, ...props }, ref) => (
 AlertDialogTitle.displayName = AlertDialogPrimitive.Title.displayName;
 
 const AlertDialogDescription = React.forwardRef(({ className, ...props }, ref) => (
-  <AlertDialogPrimitive.Description ref={ref} className={cn('text-sm text-muted-foreground', className)} {...props} />
+  <AlertDialogPrimitive.Description ref={ref} className={cn('text-sm text', className)} {...props} />
 ));
 AlertDialogDescription.displayName = AlertDialogPrimitive.Description.displayName;
 

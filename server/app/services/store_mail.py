@@ -1,4 +1,6 @@
 import pymongo
+from bson.binary import Binary
+from datetime import datetime, timezone
 
 from config.settings import MONGO_URI  
 
@@ -33,11 +35,12 @@ def store_email_key(to_email, key, qber, encrypted_email, sender_email, file_nam
             "encrypted_body": encrypted_email["body"],
             "file_name": file_name,
             "file_hex": file_hex,
-            "key": key,
+            "key": Binary(key),
             "qber": qber,
-            "is_read": False
+            "is_read": False,
+            "created_at" : datetime.now(timezone.utc)
         }
-        email_data = db["email"]
+        email_data = db["emails"]
         result = email_data.insert_one(email_doc)
         
         email_doc["_id"] = str(result.inserted_id)
@@ -67,7 +70,9 @@ def mark_email_as_read(email_id):
         result = keys_collection.update_one(
             {"email_id": email_id},
             {"$set": {"is_read": True}}
-        )  
+        )
+        
         
     except Exception as e:
+        
         raise

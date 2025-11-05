@@ -10,7 +10,7 @@ const AuthPage = () => {
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      className="min-h-screen w-full bg-gradient-to-br from-slate-900 via-slate-800 to-gray-900"
+      className="min-h-screen w-full backgroud"
     >
       {isLogin ? (
         <LoginPage onNavigateToSignup={() => setIsLogin(false)} />
